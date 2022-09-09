@@ -10,6 +10,9 @@ dependencies:
   shelf:
   shelf_modular: ^2.0.1
   postgres:
+  shelf_swagger_ui:
+  bcrypt:
+  dart_jsonwebtoken:
 #   path: ^1.8.0
 
 dev_dependencies:
