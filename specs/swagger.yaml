@@ -7,17 +7,139 @@ servers:
   - url: http://localhost:3000
     description: Local server
 tags:
+- name: "auth"
+  description: "Access to Auth"
 - name: "user"
   description: "Access to User"
 
 paths:
+  /auth/login:
+      get:
+        tags:
+          - 'auth'
+        summary: Login with credential (email/password)
+        security:
+          - basicAuth: []
+        responses:
+          '200':
+            description: ''
+            content:
+              application/json:
+                schema:  
+                  $ref: '#/components/schemas/Tokenization'
+          '403':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
+          '404':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
+  /auth/check_token:
+      get:
+        tags:
+          - 'auth'
+        summary: Check Bearer token
+        security:
+          - bearerRefreshAuth: []
+        responses:
+          '200':
+            description: ''
+            content:
+              application/json:
+                schema:  
+                  type: object
+                  properties:
+                    message:
+                      type: string
+          '403':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
+          '404':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
+  /auth/refresh_token:
+      get:
+        tags:
+          - 'auth'
+        summary: Refresh Bearer token
+        security:
+          - bearerAuth: []
+        responses:
+          '200':
+            description: ''
+            content:
+              application/json:
+                schema:  
+                  $ref: '#/components/schemas/Tokenization'
+          '403':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
+          '404':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
+  /auth/update_password:
+      put:
+        tags:
+          - 'auth'
+        summary: Update password
+        security:
+          - bearerAuth: []
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  password:
+                    type: string
+                  newPassword:
+                    type: string
+        responses:
+          '200':
+            description: ''
+            content:
+              application/json:
+                schema:  
+                  type: object
+                  properties:
+                    message:
+                      type: string
+          '403':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
+          '404':
+            description: ''
+            content:
+              application/json:
+                schema: 
+                  $ref: '#/components/schemas/BackendException'
   /user/{id}:
     get:
       tags:
         - 'user'
-      security: 
-        - bearerAuth: []
       summary: Get user by id
+      security:
+        - bearerAuth: []
       parameters: 
         - in: path 
           name: id
@@ -70,6 +192,8 @@ paths:
       tags:
         - 'user'
       summary: Get all users
+      security:
+        - bearerAuth: []
       responses:
         '200':
           description: ''
@@ -137,7 +261,28 @@ paths:
                 $ref: '#/components/schemas/BackendException'
 
 components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Auth header (Authorization) Access Token"
+    bearerRefreshAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: "Refresh Token"
   schemas:
+    Tokenization:
+        type: object
+        properties:
+          access_token:
+            type: string
+          refresh_token:
+            type: string
     User:
       type: object
       properties:
