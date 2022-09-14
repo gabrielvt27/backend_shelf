@@ -1,65 +1,57 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:backend_flutterando/src/core/services/bcrypt/bcrypt_service.dart';
 import 'package:backend_flutterando/src/core/services/database/remote_database.dart';
 import 'package:backend_flutterando/src/features/auth/guard/auth_guard.dart';
+import 'package:backend_flutterando/src/features/user/errors/user_exception.dart';
+import 'package:backend_flutterando/src/features/user/models/userparams_model.dart';
+import 'package:backend_flutterando/src/features/user/repositories/user_repository.dart';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_modular/shelf_modular.dart';
 
 class UserResource extends Resource {
   @override
   List<Route> get routes => [
-        Route.get('/user', _getAllUsers, middlewares: [AuthGuard()]),
-        Route.get('/user/:id', _getUserById, middlewares: [AuthGuard()]),
-        Route.post('/user', _createUser),
-        Route.put('/user/:id', _updateUser, middlewares: [AuthGuard()]),
-        Route.delete('/user/:id', _deleteUser, middlewares: [AuthGuard()]),
+        Route.get('/', _getAllUsers, middlewares: [AuthGuard()]),
+        Route.get('/:id', _getUserById, middlewares: [AuthGuard()]),
+        Route.post('/', _createUser),
+        Route.put('/', _updateUser, middlewares: [AuthGuard()]),
+        Route.delete('/:id', _deleteUser, middlewares: [AuthGuard()]),
       ];
 
   FutureOr<Response> _getAllUsers(Injector injector) async {
-    final database = injector.get<RemoteDataBase>();
-
-    final result = await database
-        .query('SELECT id, name, email, role FROM "User" ORDER BY id;');
-
-    final usersList = result.map((e) => e['User']).toList();
-    return Response.ok(jsonEncode(usersList));
+    final userRepository = injector.get<UserRepository>();
+    final userList = await userRepository.getAllUsers();
+    return Response.ok(
+      jsonEncode(userList.map((user) => user.toMap()).toList()),
+    );
   }
 
   FutureOr<Response> _getUserById(
       ModularArguments arguments, Injector injector) async {
     final userId = arguments.params['id'];
-    final database = injector.get<RemoteDataBase>();
+    final userRepository = injector.get<UserRepository>();
 
-    final result = await database.query(
-        'SELECT id, name, email, role FROM "User" WHERE id = @id;',
-        variables: {
-          'id': userId,
-        });
-
-    final userMap = result.map((e) => e['User']).first;
-    return Response.ok(jsonEncode(userMap));
+    try {
+      final user = await userRepository.getUserById(userId);
+      return Response.ok(user.toJson());
+    } on UserException catch (e) {
+      return Response(e.statusCode, body: e.toJson());
+    }
   }
 
   FutureOr<Response> _createUser(
       ModularArguments arguments, Injector injector) async {
     final userParams = (arguments.data as Map).cast<String, dynamic>();
+    final userRepository = injector.get<UserRepository>();
 
-    final database = injector.get<RemoteDataBase>();
-    final bcrypt = injector.get<BCryptService>();
-
-    userParams.remove('id');
-    userParams['password'] =
-        bcrypt.generateHash(userParams['password'].toString());
-
-    final result = await database.query(
-      'INSERT INTO "User"(name, email, password) VALUES (@name, @email, @password) RETURNING id, name, email, role;',
-      variables: userParams,
-    );
-
-    final userMap = result.map((e) => e['User']).first;
-    return Response(201, body: jsonEncode(userMap));
+    try {
+      final user =
+          await userRepository.createUser(UserParamsModel.fromMap(userParams));
+      return Response.ok(user.toJson());
+    } on UserException catch (e) {
+      return Response(e.statusCode, body: e.toJson());
+    }
   }
 
   FutureOr<Response> _updateUser(

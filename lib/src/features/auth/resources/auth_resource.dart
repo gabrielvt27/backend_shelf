@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:backend_flutterando/src/core/services/jwt/jwt_service.dart';
 import 'package:backend_flutterando/src/core/services/request_extractor/request_extractor.dart';
-import 'package:backend_flutterando/src/features/auth/errors/errors.dart';
+import 'package:backend_flutterando/src/features/auth/errors/auth_exception.dart';
 import 'package:backend_flutterando/src/features/auth/guard/auth_guard.dart';
 import 'package:backend_flutterando/src/features/auth/repositories/auth_repository.dart';
 import 'package:shelf/shelf.dart';
