@@ -57,32 +57,23 @@ class UserResource extends Resource {
   FutureOr<Response> _updateUser(
       ModularArguments arguments, Injector injector) async {
     final userParams = (arguments.data as Map).cast<String, dynamic>();
+    final userRepository = injector.get<UserRepository>();
 
-    final inValidCols = ['id', 'password'];
-    final cols = userParams.keys
-        .where((key) => !inValidCols.contains(key))
-        .map((key) => '$key=@$key')
-        .toList();
-
-    final database = injector.get<RemoteDataBase>();
-
-    final result = await database.query(
-      'UPDATE "User" SET ${cols.join(',')} WHERE id = @id RETURNING id, name, email, role;',
-      variables: userParams,
-    );
-
-    final userMap = result.map((e) => e['User']).first;
-    return Response.ok(jsonEncode(userMap));
+    try {
+      final user =
+          await userRepository.updateUser(UserParamsModel.fromMap(userParams));
+      return Response.ok(user.toJson());
+    } on UserException catch (e) {
+      return Response(e.statusCode, body: e.toJson());
+    }
   }
 
   FutureOr<Response> _deleteUser(
       ModularArguments arguments, Injector injector) async {
     final userId = arguments.params['id'];
-    final database = injector.get<RemoteDataBase>();
+    final userRepository = injector.get<UserRepository>();
 
-    await database.query('DELETE FROM "User" WHERE id = @id;', variables: {
-      'id': userId,
-    });
+    await userRepository.deleteUser(userId);
 
     return Response.ok(jsonEncode({"message": "deleted $userId"}));
   }

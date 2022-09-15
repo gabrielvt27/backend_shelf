@@ -34,4 +34,28 @@ class UserDataSourceImp implements UserDataSource {
 
     return result.length > 0 ? result.map((e) => e['User']).first : null;
   }
+
+  @override
+  Future<Map<String, dynamic>?> updateUser(Map<String, dynamic> map) async {
+    final inValidCols = ['id', 'password'];
+    final cols = map.keys
+        .where((key) => !inValidCols.contains(key))
+        .map((key) => '$key=@$key')
+        .toList();
+
+    final result = await remoteDataBase.query(
+      'UPDATE "User" SET ${cols.join(',')} WHERE id = @id RETURNING id, name, email, role;',
+      variables: map,
+    );
+
+    return result.length > 0 ? result.map((e) => e['User']).first : null;
+  }
+
+  @override
+  Future deleteUser(id) async {
+    await remoteDataBase
+        .query('DELETE FROM "User" WHERE id = @id;', variables: {
+      'id': id,
+    });
+  }
 }

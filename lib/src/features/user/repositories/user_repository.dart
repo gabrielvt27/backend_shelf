@@ -39,4 +39,18 @@ class UserRepository {
 
     return UserModel.fromMap(user);
   }
+
+  Future<UserModel> updateUser(UserParamsModel userParamsModel) async {
+    final user = await userDataSource.createUser(userParamsModel.toMap());
+
+    if (user == null) {
+      throw UserException(403, "Não foi possível atualizar o usuário");
+    }
+
+    return UserModel.fromMap(user);
+  }
+
+  Future deleteUser(id) async {
+    await userDataSource.deleteUser(id);
+  }
 }
