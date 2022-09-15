@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:backend_flutterando/src/core/services/database/remote_database.dart';
 import 'package:backend_flutterando/src/features/auth/guard/auth_guard.dart';
 import 'package:backend_flutterando/src/features/user/errors/user_exception.dart';
 import 'package:backend_flutterando/src/features/user/models/userparams_model.dart';
